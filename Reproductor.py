@@ -10,9 +10,8 @@ class ReproductorMusical:
         self.master = master
         master.title("Reproductor Musical")
         master.geometry("550x225")
-        
-        self.cancion=IntVar()
-        self.cancion.set(1)
+        self.cancion=StringVar()
+        self.cancion.set("Cancion_a_tocar")
         self.estado=StringVar()
         self.estado.set("Detenido")
         self.filename=StringVar()
@@ -34,14 +33,18 @@ class ReproductorMusical:
         self.frame2.grid(row=0,column=2)
         
         #Creando Listbox
-        self.listaCanciones=Listbox(self.frame2,bd=4,height=7)
+        self.listaCanciones=Listbox(self.frame2,bd=4,height=6)
         self.listaCanciones.grid(row=1,column=1)
         
         
-        #Creando Scrollbar para listbox
+        #Creando Scrollbar vertical para listbox
         self.scroll=Scrollbar(self.frame2,orient=VERTICAL)
         self.scroll.grid(row=1,column=2,sticky=S+N)
-
+        
+        #Creando Scrollbar horizontal para listbox
+        self.scroll2=Scrollbar(self.frame2,orient=HORIZONTAL)
+        self.scroll2.grid(row=2,column=1,sticky=W+E)
+        
         #Creacion de Status bar
         self.status=Label(master,text="Satus: Reproductor detenido",bd=1,relief=SUNKEN,anchor=E)
         self.status.grid(row=1,column=0,columnspan=4,sticky=W+E)
@@ -60,52 +63,59 @@ class ReproductorMusical:
         self.boton_pausar.grid(row=2,column=1)
         self.boton_salir.grid(row=3,column=1)
         self.agregar.grid(row=0,column=1)
-        self.eliminar.grid(row=2,column=1)
+        self.eliminar.grid(row=3,column=1)
         
-        #Configuracion de scrollbar
+        #Configuracion de scrollbar Vertical
         self.listaCanciones.config(yscrollcommand=self.scroll.set)
         self.scroll.config(command=self.listaCanciones.yview)
         
+        #Configuracion de scrollbar Horizontal
+        self.listaCanciones.config(xscrollcommand=self.scroll2.set)
+        self.scroll2.config(command=self.listaCanciones.xview)
+        
     def AgregarCancion(self):
-        self.filename=filedialog.askopenfilename(initialdir="Canciones/",title="select a file",filetypes=(("ogg files","*.ogg"),("mp3 files","*.mp3"),("mp4 files","*.mp4"),("all files","*.*")))
-        self.cancion =pygame.mixer.Sound(self.filename)
-        self.Lista_canciones.append(self.cancion)
-        self.listaCanciones.insert(self.listaCanciones.size()+1,"Cancion "+str(self.listaCanciones.size()+1))
-        self.listaCanciones.select_set(0)
-       
+        self.filename=filedialog.askopenfilename(initialdir="Canciones/",title="select a file",filetypes=(("mp3 files","*.mp3"),("wav files","*.wav"),("ogg files","*.ogg")))
+        self.Lista_canciones.append(self.filename)
+        self.listaCanciones.insert(self.listaCanciones.size()+1,(self.filename.split("/"))[(len(self.filename.split("/"))-1)])
+        if len(self.Lista_canciones)==1:
+            self.listaCanciones.select_set(0)
 
     def EliminarCancion(self):
         if self.listaCanciones.size()>0:
-            self.cancion=self.Lista_canciones[(self.listaCanciones.curselection())[0]]
-            self.Lista_canciones.remove(self.cancion)
+            cancion=self.Lista_canciones[(self.listaCanciones.curselection())[0]]
+            self.Lista_canciones.remove(cancion)
             self.listaCanciones.delete(self.listaCanciones.curselection())
             self.listaCanciones.select_set(0)
 
     def ReproducirCancion(self):
         if self.listaCanciones.size()>0:
             if self.estado.get()=="Detenido":           
-                self.Lista_canciones[(self.listaCanciones.curselection())[0]].play()
+                self.cancion.set(self.Lista_canciones[(self.listaCanciones.curselection())[0]])
+                pygame.mixer.music.load(self.cancion.get())
+                pygame.mixer.music.play()
                 self.estado.set("Reproduciendo")
                 self.StatusBar()
             else:
-                pygame.mixer.stop()
-                self.Lista_canciones[(self.listaCanciones.curselection())[0]].play()
+                pygame.mixer.music.stop()
+                self.cancion.set(self.Lista_canciones[(self.listaCanciones.curselection())[0]])
+                pygame.mixer.music.load(self.cancion.get()) 
+                pygame.mixer.music.play()
                 self.estado.set("Reproduciendo")
                 self.StatusBar()
             
     def DetenerCancion(self):
-        pygame.mixer.stop()
+        pygame.mixer.music.stop()
         self.estado.set("Detenido")
         self.StatusBar()
 
     def PausarReanudar(self):
         if self.estado.get()=="Reproduciendo":
-            pygame.mixer.pause()
+            pygame.mixer.music.pause()
             self.estado.set("En pausa")
             self.StatusBar()
         else:
             if self.estado.get()=="En pausa":
-                pygame.mixer.unpause()
+                pygame.mixer.music.unpause()
                 self.estado.set("Reproduciendo")
                 self.StatusBar()
     
